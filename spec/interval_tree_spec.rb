@@ -49,7 +49,7 @@ describe "IntervalTree::Node" do
         expect(node.left_node).to have_received(:search)
       end
 
-      it "does not search the right node, since the top node's center (12) is greater than the search's end (3)" do
+      it "does not search the right node, since the top node's center (14.5) is greater than the search's end (3)" do
         expect(node.right_node).not_to have_received(:search)
       end
     end
@@ -84,7 +84,7 @@ describe "IntervalTree::Tree" do
       end
     end
 
-    context 'given [(1...5),(2...6), (3...7)]' do
+    context 'given [(1...5),(2...6),(3...7)]' do
       it 'returns ret.top_node.x_centeran == 4' do
         itvs = [(1...5), (2...6), (3...7)]
         tree = IntervalTree::Tree.new(itvs)
@@ -149,7 +149,7 @@ describe "IntervalTree::Tree" do
       let(:node) do
         IntervalTree::Node.new(
           14.5, # x_center
-          [2...20], # s_center
+          [[2...20],[2...20]], # s_center
           left_node, # s_left
           right_node, # s_right
         )
@@ -157,7 +157,7 @@ describe "IntervalTree::Tree" do
       let(:left_node) do
         IntervalTree::Node.new(
           5.5, # x_center
-          [0...8, 3...6], # s_center
+          [[0...8, 3...6], [0...8, 3...6]], # s_center
           left_node_of_left_node, # s_left
           right_node_of_left_node, # s_right
         )
@@ -165,7 +165,7 @@ describe "IntervalTree::Tree" do
       let(:right_node) do
         IntervalTree::Node.new(
           20.5, # x_center
-          [16...21, 17...25], # s_center
+          [[16...21, 17...25], [17...25, 16...21]], # s_center
           left_node_of_right_node, # s_left
           right_node_of_right_node, # s_right
         )
@@ -173,7 +173,7 @@ describe "IntervalTree::Tree" do
       let(:left_node_of_left_node) do
         IntervalTree::Node.new(
           2.5, # x_center
-          [0...5], # s_center
+          [[0...5],[0...5]], # s_center
           nil, # s_left
           nil, # s_right
         )
@@ -181,7 +181,7 @@ describe "IntervalTree::Tree" do
       let(:right_node_of_left_node) do
         IntervalTree::Node.new(
           12, # x_center
-          [10...14], # s_center
+          [[10...14],[10...14]], # s_center
           nil, # s_left
           nil, # s_right
         )
@@ -189,7 +189,7 @@ describe "IntervalTree::Tree" do
       let(:left_node_of_right_node) do
         IntervalTree::Node.new(
           17.5, # x_center
-          [15...20], # s_center
+          [[15...20],[15...20]], # s_center
           nil, # s_left
           nil, # s_right
         )
@@ -197,7 +197,7 @@ describe "IntervalTree::Tree" do
       let(:right_node_of_right_node) do
         IntervalTree::Node.new(
           22.5, # x_center
-          [21...24], # s_center
+          [[21...24],[21...24]], # s_center
           nil, # s_left
           nil, # s_right
         )
@@ -264,6 +264,26 @@ describe "IntervalTree::Tree" do
 
       it 'returns the range in the left end corner case' do
         expect(IntervalTree::Tree.new(1..4).search(1)).to be == [1...5]
+      end
+    end
+
+    context 'given [(10...14), (2...20), (0...5), (0...8), (3...6), (15...20), (16...21), (17...25), (21...24)] and a point query "14.5"' do
+      it 'returns [2...20], since x_center equals the query' do
+        tree = IntervalTree::Tree.new(
+          [
+            10...14,
+            2...20,
+            0...5,
+            0...8,
+            3...6,
+            15...20,
+            16...21,
+            17...25,
+            21...24,
+          ],
+        )
+        results = tree.search(14.5)
+        expect(results).to be == [2...20]
       end
     end
 
