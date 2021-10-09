@@ -13,7 +13,7 @@ module IntervalTree
     def divide_intervals(intervals)
       return nil if intervals.empty?
 
-      x_center = center(intervals)
+      x_center = median(intervals).to_r
       s_center = []
       s_left = []
       s_right = []
@@ -21,7 +21,7 @@ module IntervalTree
       intervals.each do |k|
         if k.end.to_r < x_center
           s_left << k
-        elsif k.begin.to_r > x_center
+        elsif x_center < k.begin.to_r
           s_right << k
         else
           s_center << k
@@ -68,11 +68,18 @@ module IntervalTree
       end
     end
 
-    def center(intervals)
-      (
-        intervals.map(&:begin).min.to_r +
-        intervals.map(&:end).max.to_r
-      ) / 2
+    def median(intervals)
+      sorted_endpoints = intervals.map(&:end).sort
+      
+      len = sorted_endpoints.length
+      middle = len / 2
+
+      len.even? ? (sorted_endpoints[middle - 1] + sorted_endpoints[middle]) / 2.0 : sorted_endpoints[middle]
+
+      # (
+      #  intervals.map(&:begin).min.to_r +
+      #   intervals.map(&:end).max.to_r
+      # ) / 2
     end
 
     def point_search(node, point, result, unique)
