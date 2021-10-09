@@ -80,13 +80,13 @@ module IntervalTree
 
     def point_search(node, point, result, unique)
       stack = [node]
-      node_left_node = node.left_node
-      node_right_node = node.right_node
-      node_x_center = node.x_center
 
       until stack.empty?
         node = stack.pop
-
+        node_left_node = node.left_node
+        node_right_node = node.right_node
+        node_x_center = node.x_center
+        
         if point < node_x_center
           node.s_center[0].each do |k|
             break if k.begin > point
@@ -102,8 +102,6 @@ module IntervalTree
 
             result << k
           end
-
-          break if point == node_x_center
 
           stack << node_right_node if node_right_node
 
