@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-module IntervalTree
+module TwoListsIterativeMedian
   class Tree
     def initialize(ranges, &range_factory)
       range_factory = ->(l, r) { (l...r + 1) } unless block_given?
