@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-module TwoListsIterativeAverage
+module IntervalTree
   class Tree
     def initialize(ranges, &range_factory)
       range_factory = ->(l, r) { (l...r + 1) } unless block_given?
@@ -13,7 +13,7 @@ module TwoListsIterativeAverage
     def divide_intervals(intervals)
       return nil if intervals.empty?
 
-      x_center = center(intervals).to_r
+      x_center = center(intervals)
       s_center = []
       s_left = []
       s_right = []
@@ -46,9 +46,10 @@ module TwoListsIterativeAverage
         result = top_node.search(query)
         options[:unique] ? result.uniq! : result
       else
-        result = point_search(top_node, query.to_r, [], options[:unique])
+        result = point_search(top_node, query, [], options[:unique])
       end
-      options[:sort] ? result.sort_by { |x| [x.begin, x.end] } : result
+      result = result.sort_by! { |x| [x.begin, x.end] }
+      options[:sort] ? result.sort_by! { |x| [x.begin, x.end] } : result
     end
 
     def ==(other)
@@ -84,21 +85,27 @@ module TwoListsIterativeAverage
         node_left_node = node.left_node
         node_right_node = node.right_node
         node_x_center = node.x_center
-        
-        if point < node_x_center
-          node.s_center[0].each do |k|
-            break if k.begin > point
 
-            result << k
+        if point < node_x_center
+
+          if point < node.s_center_end
+            node.s_center[0].each do |k|
+              break if k.begin > point
+
+              result << k
+            end
           end
 
           stack << node_left_node if node_left_node
 
         else
-          node.s_center[1].each do |k|
-            break if k.end <= point
 
-            result << k
+          if point < node.s_center_end
+            node.s_center[1].each do |k|
+              break if k.end <= point
+
+              result << k
+            end
           end
 
           stack << node_right_node if node_right_node
@@ -114,14 +121,16 @@ module TwoListsIterativeAverage
     def initialize(x_center, s_center, left_node, right_node)
       @x_center = x_center
       @s_center = s_center
+      @s_center_end = s_center.empty? ? nil : s_center.first.map(&:end).max
       @left_node = left_node
       @right_node = right_node
     end
-    attr_reader :x_center, :s_center, :left_node, :right_node
+    attr_reader :x_center, :s_center, :s_center_end, :left_node, :right_node
 
     def ==(other)
       x_center == other.x_center &&
         s_center == other.s_center &&
+        s_center_end == other.s_center_end &&
         left_node == other.left_node &&
         right_node == other.right_node
     end
@@ -129,8 +138,8 @@ module TwoListsIterativeAverage
     # Search by range only
     def search(query)
       search_s_center(query) +
-        (left_node && query.begin.to_r < x_center && left_node.search(query) || []) +
-        (right_node && query.end.to_r > x_center && right_node.search(query) || [])
+        (left_node && query.begin < x_center && left_node.search(query) || []) +
+        (right_node && query.end > x_center && right_node.search(query) || [])
     end
 
     private

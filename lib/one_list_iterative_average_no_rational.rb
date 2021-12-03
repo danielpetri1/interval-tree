@@ -1,11 +1,12 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-module TwoListsIterativeAverage
+module OneListIterativeAverageNoRational
   class Tree
     def initialize(ranges, &range_factory)
       range_factory = ->(l, r) { (l...r + 1) } unless block_given?
       ranges_excl = ensure_exclusive_end([ranges].flatten, range_factory)
+      ranges_excl.sort_by! { |x| [x.begin, x.end] }
       @top_node = divide_intervals(ranges_excl)
     end
     attr_reader :top_node
@@ -13,25 +14,24 @@ module TwoListsIterativeAverage
     def divide_intervals(intervals)
       return nil if intervals.empty?
 
-      x_center = center(intervals).to_r
+      x_center = center(intervals)
       s_center = []
       s_left = []
       s_right = []
 
       intervals.each do |k|
-        if k.end.to_r < x_center
+        if k.end < x_center
           s_left << k
-        elsif x_center < k.begin.to_r
+        elsif k.begin > x_center
           s_right << k
         else
           s_center << k
         end
       end
 
-      node_contents = [s_center.sort_by(&:begin),
-                       s_center.sort_by(&:end).reverse]
+      s_center.sort_by! { |x| [x.begin, x.end] }
 
-      Node.new(x_center, node_contents,
+      Node.new(x_center, s_center,
                divide_intervals(s_left), divide_intervals(s_right))
     end
 
@@ -46,7 +46,7 @@ module TwoListsIterativeAverage
         result = top_node.search(query)
         options[:unique] ? result.uniq! : result
       else
-        result = point_search(top_node, query.to_r, [], options[:unique])
+        result = point_search(top_node, query, [], options[:unique])
       end
       options[:sort] ? result.sort_by { |x| [x.begin, x.end] } : result
     end
@@ -71,8 +71,8 @@ module TwoListsIterativeAverage
 
     def center(intervals)
       (
-        intervals.map(&:begin).min.to_r +
-        intervals.map(&:end).max.to_r
+        intervals.map(&:begin).min +
+        intervals.map(&:end).max
       ) / 2
     end
 
@@ -84,29 +84,29 @@ module TwoListsIterativeAverage
         node_left_node = node.left_node
         node_right_node = node.right_node
         node_x_center = node.x_center
-        
-        if point < node_x_center
-          node.s_center[0].each do |k|
+        traverse_left = (point < node_x_center)
+
+        if point < node.s_center_end
+          node.s_center.each do |k|
             break if k.begin > point
 
-            result << k
+            result << k if point < k.end
           end
-
-          stack << node_left_node if node_left_node
-
-        else
-          node.s_center[1].each do |k|
-            break if k.end <= point
-
-            result << k
-          end
-
-          stack << node_right_node if node_right_node
-
         end
-      end
 
-      unique ? result.uniq : result
+        if node_left_node && traverse_left
+          stack << node_left_node
+
+        elsif node_right_node && !traverse_left
+          stack << node_right_node
+        end
+
+      end
+      if unique
+        result.uniq
+      else
+        result
+      end
     end
   end
 
@@ -114,10 +114,11 @@ module TwoListsIterativeAverage
     def initialize(x_center, s_center, left_node, right_node)
       @x_center = x_center
       @s_center = s_center
+      @s_center_end = s_center.map(&:end).max
       @left_node = left_node
       @right_node = right_node
     end
-    attr_reader :x_center, :s_center, :left_node, :right_node
+    attr_reader :x_center, :s_center, :s_center_end, :left_node, :right_node
 
     def ==(other)
       x_center == other.x_center &&
@@ -129,8 +130,8 @@ module TwoListsIterativeAverage
     # Search by range only
     def search(query)
       search_s_center(query) +
-        (left_node && query.begin.to_r < x_center && left_node.search(query) || []) +
-        (right_node && query.end.to_r > x_center && right_node.search(query) || [])
+        (left_node && query.begin < x_center && left_node.search(query) || []) +
+        (right_node && query.end > x_center && right_node.search(query) || [])
     end
 
     private
@@ -138,7 +139,7 @@ module TwoListsIterativeAverage
     def search_s_center(query)
       result = []
 
-      s_center[0].each do |k|
+      s_center.each do |k|
         k_begin = k.begin
         query_end = query.end
 

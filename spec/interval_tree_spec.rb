@@ -38,8 +38,8 @@ describe "IntervalTree::Node" do
       expect(result).to eq(
         [
           2...20,
-          0...8,
           0...5,
+          0...8,
         ]
       )
     end
@@ -57,12 +57,12 @@ describe "IntervalTree::Node" do
 end
 
 describe "IntervalTree::Tree" do
-  describe '#median' do
+  describe '#center' do
     context 'given [(1...5)]' do
       it 'returns 3' do
         itvs = [(1...5)]
         t = IntervalTree::Tree.new([])
-        expect(t.__send__(:median, itvs)).to be == 3.0
+        expect(t.__send__(:center, itvs)).to be == 3.0
 
       end
     end
@@ -71,7 +71,7 @@ describe "IntervalTree::Tree" do
       it 'returns 3.5' do
         itvs = [(1...5), (2...6),]
         t = IntervalTree::Tree.new([])
-        expect(t.__send__(:median, itvs)).to be == 3.5
+        expect(t.__send__(:center, itvs)).to be == 3.5
       end
     end
   end
@@ -148,50 +148,26 @@ describe "IntervalTree::Tree" do
 
       let(:node) do
         IntervalTree::Node.new(
-          14.5, # x_center
-          [[2...20],[2...20]], # s_center
+          12.5, # x_center
+          [[2...20, 10...14],[2...20, 10...14]], # s_center
           left_node, # s_left
           right_node, # s_right
         )
       end
       let(:left_node) do
         IntervalTree::Node.new(
-          5.5, # x_center
-          [[0...8, 3...6], [0...8, 3...6]], # s_center
-          left_node_of_left_node, # s_left
-          right_node_of_left_node, # s_right
+          4, # x_center
+          [[0...5,0...8, 3...6], [0...8, 3...6, 0...5]], # s_center
+          nil, # s_left
+          nil, # s_right
         )
       end
       let(:right_node) do
         IntervalTree::Node.new(
-          20.5, # x_center
-          [[16...21, 17...25], [17...25, 16...21]], # s_center
-          left_node_of_right_node, # s_left
+          20, # x_center
+          [[15...20, 16...21, 17...25], [17...25, 16...21, 15...20]], # s_center
+          nil, # s_left
           right_node_of_right_node, # s_right
-        )
-      end
-      let(:left_node_of_left_node) do
-        IntervalTree::Node.new(
-          2.5, # x_center
-          [[0...5],[0...5]], # s_center
-          nil, # s_left
-          nil, # s_right
-        )
-      end
-      let(:right_node_of_left_node) do
-        IntervalTree::Node.new(
-          12, # x_center
-          [[10...14],[10...14]], # s_center
-          nil, # s_left
-          nil, # s_right
-        )
-      end
-      let(:left_node_of_right_node) do
-        IntervalTree::Node.new(
-          17.5, # x_center
-          [[15...20],[15...20]], # s_center
-          nil, # s_left
-          nil, # s_right
         )
       end
       let(:right_node_of_right_node) do
@@ -214,14 +190,6 @@ describe "IntervalTree::Tree" do
 
         it 'divides into a right node correctly' do
           expect(tree.top_node.right_node).to eq(right_node)
-        end
-
-        it 'divides the left node into a left node correctly' do
-          expect(tree.top_node.left_node.left_node).to eq(left_node_of_left_node)
-        end
-
-        it 'divides the left node into a right node correctly' do
-          expect(tree.top_node.left_node.right_node).to eq(right_node_of_left_node)
         end
       end
     end

@@ -70,12 +70,9 @@ module TwoListsIterativeMedian
     end
 
     def median(intervals)
-      sorted_endpoints = (intervals.map(&:begin) + intervals.map(&:end)).sort
-
-      len = sorted_endpoints.length
-      middle = len / 2
-
-      len.even? ? (sorted_endpoints[middle - 1].to_r + sorted_endpoints[middle].to_r) / 2 : sorted_endpoints[middle].to_r
+      sorted_endpoints = (intervals.flat_map { |itv| [itv.begin, itv.end] }).sort!
+      middle = (sorted_endpoints.length - 1) / 2.0
+      (sorted_endpoints[middle.floor] + sorted_endpoints[middle.ceil]).to_r / 2
     end
 
     def point_search(node, point, result, unique)
